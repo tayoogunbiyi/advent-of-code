@@ -24,8 +24,25 @@ func GetTotalFuelRequirements(rocketMasses []int) int {
 	return totalFuelRequirements
 }
 
+func GetTotalFuelRequirementsPartB(rocketMasses []int) int {
+	totalFuelRequirements := 0
+
+	for _, rocketMass := range rocketMasses {
+		totalFuelRequirements += getFinalFuelFromCurrentFuel(rocketMass)
+	}
+	return totalFuelRequirements
+}
+
+func getFinalFuelFromCurrentFuel(currentFuel int) int {
+	requiredFuel := (currentFuel / 3) - 2
+	if requiredFuel < 0 {
+		return 0
+	}
+	return requiredFuel + getFinalFuelFromCurrentFuel(requiredFuel)
+}
+
 func main() {
-	file, err := os.Open("input.txt")
+	file, err := os.Open("./input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,6 +57,11 @@ func main() {
 
 	result := GetTotalFuelRequirements(masses)
 
-	fmt.Println(result)
+	fmt.Println("Part A result :", result)
+
+	result = GetTotalFuelRequirementsPartB(masses)
+
+	fmt.Println("Part B result :", result)
+
 
 }
