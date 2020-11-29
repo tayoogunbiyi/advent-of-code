@@ -25,6 +25,7 @@ type wire struct {
 	Path []point
 }
 
+
 func (p1 point) addPoint(p2 point) point {
 	return *newPoint(p1.X+p2.X, p1.Y+p2.Y)
 }
@@ -34,7 +35,6 @@ func (p1 point) equals(p2 point) bool {
 
 func (p1 point) stringify() string {
 	return strconv.Itoa(p1.X) + "-" + strconv.Itoa(p1.Y)
-
 }
 
 func (wp wirePoint) generateCoveredPoints(referencePoint point) []point {
@@ -93,16 +93,37 @@ func newWirePoint(direction string, length int) *wirePoint {
 	return &wirePoint{direction, length}
 }
 
-func constructWire(wirePath []wirePoint, referencePoint point) wire {
+func constructWireWithPath(wirePath []wirePoint, referencePoint point) wire {
 	wire := newWire()
 	wire.addPointsToPath([]point{referencePoint})
+
 	for _, currentWirePoint := range wirePath {
 		coveredPoints := currentWirePoint.generateCoveredPoints(referencePoint)
 		wire.addPointsToPath(coveredPoints)
 		referencePoint = coveredPoints[len(coveredPoints)-1]
 	}
+
 	return *wire
 
+}
+
+func findIntersectingPoints(points1 []point, points2 []point) []point {
+	var result []point
+	ht := make(map[string]bool)
+
+	for _, p1 := range points1 {
+		key := p1.stringify()
+		ht[key] = true
+	}
+	for _, p2 := range points2 {
+		key := p2.stringify()
+		_, ok := ht[key]
+
+		if ok && !p2.equals(centralPortPoint) {
+			result = append(result, p2)
+		}
+	}
+	return result
 }
 
 func main() {
@@ -129,8 +150,8 @@ func main() {
 		wirePaths = append(wirePaths, wirePath)
 	}
 
-	wire1 := constructWire(wirePaths[0], centralPortPoint)
-	wire2 := constructWire(wirePaths[1], centralPortPoint)
+	wire1 := constructWireWithPath(wirePaths[0], centralPortPoint)
+	wire2 := constructWireWithPath(wirePaths[1], centralPortPoint)
 
 	intersectingPoints := findIntersectingPoints(wire1.Path, wire2.Path)
 	nearestIntersectionDistance := math.MaxInt16
@@ -142,23 +163,4 @@ func main() {
 	}
 	fmt.Println("Nearest intersection distance is ", nearestIntersectionDistance)
 
-}
-
-func findIntersectingPoints(points1 []point, points2 []point) []point {
-	var result []point
-	ht := make(map[string]bool)
-
-	for _, p1 := range points1 {
-		key := p1.stringify()
-		ht[key] = true
-	}
-	for _, p2 := range points2 {
-		key := p2.stringify()
-		_, ok := ht[key]
-
-		if ok && !p2.equals(centralPortPoint) {
-			result = append(result, p2)
-		}
-	}
-	return result
 }
