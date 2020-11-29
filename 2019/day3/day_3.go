@@ -1,3 +1,4 @@
+// https://adventofcode.com/2019/day/3
 package main
 
 import (
@@ -9,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-var centralPortPoint = *newPoint(0, 0)
 
 type point struct {
 	X, Y int
@@ -25,6 +24,9 @@ type wire struct {
 	Path []point
 }
 
+func newPoint(x int, y int) *point {
+	return &point{X: x, Y: y}
+}
 
 func (p1 point) addPoint(p2 point) point {
 	return *newPoint(p1.X+p2.X, p1.Y+p2.Y)
@@ -81,10 +83,6 @@ func manhattanDistance(p1 point, p2 point) int {
 	return abs(p1.X-p2.X) + abs(p1.Y-p2.Y)
 }
 
-func newPoint(x int, y int) *point {
-	return &point{X: x, Y: y}
-}
-
 func newWire() *wire {
 	return &wire{}
 }
@@ -126,8 +124,12 @@ func findIntersectingPoints(points1 []point, points2 []point) []point {
 	return result
 }
 
+var (
+	centralPortPoint = *newPoint(0, 0)
+)
+
 func main() {
-	file, err := os.Open("input2.txt")
+	file, err := os.Open("input.txt")
 
 	if err != nil {
 		log.Fatal(err)
