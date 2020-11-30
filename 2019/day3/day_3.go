@@ -32,7 +32,7 @@ func (p1 point) addPoint(p2 point) point {
 	return *newPoint(p1.X+p2.X, p1.Y+p2.Y)
 }
 func (p1 point) equals(p2 point) bool {
-	return p1.X == p2.X && p2.Y == p2.Y
+	return p1.X == p2.X && p1.Y == p2.Y
 }
 
 func (p1 point) stringify() string {
@@ -46,10 +46,10 @@ func (wp wirePoint) generateCoveredPoints(referencePoint point) []point {
 		pointDelta.X = 1
 
 	} else if wp.direction == "U" {
-		pointDelta.Y = 1
+		pointDelta.Y = -1
 
 	} else if wp.direction == "D" {
-		pointDelta.Y = -1
+		pointDelta.Y = 1
 
 	} else {
 		pointDelta.X = -1
@@ -105,6 +105,48 @@ func constructWireWithPath(wirePath []wirePoint, referencePoint point) wire {
 
 }
 
+func findStepsToPoint(points []point, targetPoint point) int {
+	for i, point := range points {
+		if point.equals(targetPoint) {
+			return i
+		}
+	}
+	return -1
+}
+
+func findMinimumSignalDelay(wire1 wire, wire2 wire, intersectionPoints []point) int {
+	minimumSignalDelay := math.MaxInt16
+
+	for _, point := range intersectionPoints {
+		currentSignalDelay := findSignalDelay(wire1, wire2, point)
+		if currentSignalDelay < minimumSignalDelay {
+			minimumSignalDelay = currentSignalDelay
+		}
+	}
+	return minimumSignalDelay
+
+}
+
+func findSignalDelay(wire1 wire, wire2 wire, intersectionPoint point) int {
+	return findStepsToPoint(wire1.Path, intersectionPoint) + findStepsToPoint(wire2.Path, intersectionPoint)
+
+}
+
+func findNearestPointToReference(pointsToSearch []point, referencePoint point) (point, int) {
+	nearestIntersectionDistance := math.MaxInt16
+	var nearestIntersectionPoint point
+
+	for _, point := range pointsToSearch {
+		distance := manhattanDistance(point, centralPortPoint)
+		if distance < nearestIntersectionDistance {
+			nearestIntersectionDistance = distance
+			nearestIntersectionPoint = point
+		}
+	}
+	return nearestIntersectionPoint, nearestIntersectionDistance
+
+}
+
 func findIntersectingPoints(points1 []point, points2 []point) []point {
 	var result []point
 	ht := make(map[string]bool)
@@ -156,13 +198,11 @@ func main() {
 	wire2 := constructWireWithPath(wirePaths[1], centralPortPoint)
 
 	intersectingPoints := findIntersectingPoints(wire1.Path, wire2.Path)
-	nearestIntersectionDistance := math.MaxInt16
-	for _, point := range intersectingPoints {
-		distance := manhattanDistance(point, centralPortPoint)
-		if distance < nearestIntersectionDistance {
-			nearestIntersectionDistance = distance
-		}
-	}
+
+	nearestIntersectionPoint, nearestIntersectionDistance := findNearestPointToReference(intersectingPoints, centralPortPoint)
+
 	fmt.Println("Nearest intersection distance is ", nearestIntersectionDistance)
+	fmt.Println("Nearest intersection point is ", nearestIntersectionPoint)
+	fmt.Println("Minimum signal delay is ", findMinimumSignalDelay(wire1, wire2, intersectingPoints))
 
 }
