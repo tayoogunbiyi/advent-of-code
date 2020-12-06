@@ -32,6 +32,25 @@ func main() {
 	}
 	fmt.Printf("%d and %d sum up to 2020, their product is %d \n", numbers[i], numbers[j], numbers[i]*numbers[j])
 
+	i, j, k := ThreeSum(numbers, 2020)
+
+	if i == -1 || j == -1 || k == -1 {
+		log.Fatal("no sum found")
+	}
+
+	fmt.Printf("%d,%d and %d sum up to 2020, their product is %d \n", numbers[i], numbers[j], numbers[k], numbers[i]*numbers[j]*numbers[k])
+
+}
+
+// TwoSum returns the index of 3 integers in the slice numbers that sum up to target
+func ThreeSum(numbers []int, target int) (int, int, int) {
+	for i, num := range numbers {
+		j, k := TwoSum(numbers, target-num)
+		if j != -1 && k != -1 && (j != i || k != i) {
+			return i, j, k
+		}
+	}
+	return -1, -1, -1
 }
 
 // TwoSum returns the index of 2 integers in the slice numbers that sum up to target
