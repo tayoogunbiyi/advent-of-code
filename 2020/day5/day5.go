@@ -55,6 +55,25 @@ func convertSeatCodeToID(seatCode string) int {
 
 }
 
+func GetMySeatID(input string) int {
+	maxSeatID := GetHighestSeatID(input)
+	seatIDS := make([]bool, maxSeatID+1)
+
+	for _, inputLine := range strings.Split(input, "\n") {
+		if !isEmptyLine(inputLine) {
+			currentSeatID := convertSeatCodeToID(inputLine)
+			seatIDS[currentSeatID] = true
+		}
+	}
+
+	for i := 1; i < len(seatIDS)-1; i++ {
+		if seatIDS[i-1] && seatIDS[i+1] && !seatIDS[i] {
+			return i
+		}
+	}
+	return -1
+}
+
 func GetHighestSeatID(input string) int {
 	maxSeatID := math.MinInt32
 	for _, inputLine := range strings.Split(input, "\n") {
@@ -75,6 +94,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("The highest seat ID is %d", GetHighestSeatID(string(data)))
+	fmt.Printf("The highest seat ID is %d\n", GetHighestSeatID(string(data)))
+	fmt.Printf("Your seat ID is %d\n", GetMySeatID(string(data)))
 
 }
