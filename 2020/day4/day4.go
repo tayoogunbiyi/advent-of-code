@@ -109,7 +109,6 @@ func processLineOfPassportData(line string) map[string]string {
 
 func isInRange(n int, lower int, upper int) bool {
 	return n >= lower && n <= upper
-
 }
 
 func (p passport) isValidWithConstraints() bool {
