@@ -13,12 +13,6 @@ func isEmptyLine(line string) bool {
 	return len(line) == 0
 }
 
-/*
-FBFBBFFRLR
-     ^
-
-*/
-
 func computeSeatRowFromSeatCode(seatCode string, seatCodeIndex int, lowerBound int, upperBound int) int {
 	if lowerBound == upperBound {
 		return lowerBound
