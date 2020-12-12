@@ -9,20 +9,6 @@ import (
 	"strings"
 )
 
-type Bag struct {
-	colour  string
-	content map[string]string
-}
-
-type SubBag struct {
-	Count  int
-	Colour string
-}
-
-// func (b Bag) isSame(b2 Bag) bool {
-// 	return b.colour == b2.colour
-// }
-
 func ParseInput(input string) map[string]map[string]int {
 	var bags = map[string]map[string]int{}
 
@@ -52,6 +38,14 @@ func dfs(bags map[string]map[string]int, currentSubBags map[string]int, targetBa
 		}
 	}
 	return false
+}
+
+func dfs2(bags map[string]map[string]int, currentSubBags map[string]int) int {
+	total := 0
+	for k, v := range currentSubBags {
+		total += v + (v * dfs2(bags, bags[k]))
+	}
+	return total
 
 }
 
@@ -67,11 +61,17 @@ func CountBagsThatEventuallyContain(input string, targetBagColor string) int {
 	return count
 }
 
+func CountBagsWithin(input string, targetBagColor string) int {
+	bags := ParseInput(input)
+	return dfs2(bags, bags[targetBagColor])
+}
+
 func main() {
 	data, err := ioutil.ReadFile("input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("the number of bag colors that can eventually contain >= 1 shiny gold bag is", CountBagsThatEventuallyContain(string(data), "shiny gold"))
+	fmt.Println("the number of bags that are nested within a shiny gold bag is", CountBagsWithin(string(data), "shiny gold"))
 
 }
