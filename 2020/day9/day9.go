@@ -1,3 +1,4 @@
+// https://adventofcode.com/2020/day/10
 package main
 
 import (
@@ -78,7 +79,6 @@ func ComputeEncryptionWeakness(numbers []int, violatingNumber int) int {
 		if seen && j+1 != i {
 			minimumInRange := FindMinInRange(numbers, j+1, i)
 			maximumInRange := FindMaxInRange(numbers, j+1, i)
-			fmt.Println(minimumInRange, maximumInRange, j+1, i)
 			return minimumInRange + maximumInRange
 		}
 		ht[currentRunningSum] = i
