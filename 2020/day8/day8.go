@@ -1,11 +1,19 @@
+// https://adventofcode.com/2020/day/8
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
+)
+
+var (
+	JMP = "jmp"
+	NOP = "nop"
+	ACC = "acc"
 )
 
 type Instruction struct {
@@ -14,33 +22,42 @@ type Instruction struct {
 }
 
 type BootCode struct {
-	instructions []Instruction
+	instructions []*Instruction
 	accumulator  int
 }
 
-func (bc *BootCode) Execute() {
-	processedInstructionIndexes := make(map[int]bool)
+func NewBootCode() *BootCode {
+	return &BootCode{
+		instructions: make([]*Instruction, 0),
+	}
+}
+
+// Execute executes 1the currently loaded program. returns the final accumulator value at the end of execution
+func (bc *BootCode) Execute() (int, error) {
+	processedInstructions := make(map[int]bool)
 	currentInstructionIndex := 0
+	accumulator := 0
 
 	for currentInstructionIndex < len(bc.instructions) {
 		currentInstruction := bc.instructions[currentInstructionIndex]
-		_, processed := processedInstructionIndexes[currentInstructionIndex]
-		if processed {
-			log.Println("cycle detected")
-			return
+
+		if _, processed := processedInstructions[currentInstructionIndex]; processed {
+			return accumulator, errors.New("cycle detected in program")
 		}
-		processedInstructionIndexes[currentInstructionIndex] = true
+
+		processedInstructions[currentInstructionIndex] = true
 
 		switch currentInstruction.operation {
-		case "acc":
-			bc.accumulator += currentInstruction.arg
+		case ACC:
+			accumulator += currentInstruction.arg
 			currentInstructionIndex++
-		case "jmp":
+		case JMP:
 			currentInstructionIndex += currentInstruction.arg
-		case "nop":
+		case NOP:
 			currentInstructionIndex++
 		}
 	}
+	return accumulator, nil
 }
 
 func (bc *BootCode) LoadProgram(input string) {
@@ -50,7 +67,7 @@ func (bc *BootCode) LoadProgram(input string) {
 			instruction := strings.Split(line, " ")
 			arg, _ := strconv.Atoi(instruction[1])
 
-			bc.instructions = append(bc.instructions, Instruction{
+			bc.instructions = append(bc.instructions, &Instruction{
 				operation: instruction[0],
 				arg:       arg,
 			})
@@ -59,14 +76,50 @@ func (bc *BootCode) LoadProgram(input string) {
 
 }
 
-func FindAccumulatorValueAtCycleStart(input string) int {
-	bc := BootCode{
-		instructions: make([]Instruction, 0),
-	}
+func FindFinalAccumulatorValue(input string) int {
+	bc := NewBootCode()
 	bc.LoadProgram(input)
-	bc.Execute()
-	return bc.accumulator
+	acc, err := bc.Execute()
+	if err != nil {
+		log.Println(err)
+	}
+	return acc
+}
 
+func operationCanCauseCycle(op string) bool {
+	return op == JMP || op == NOP
+}
+
+func getReplacementOperation(op string) (string, error) {
+	if op == JMP {
+		return NOP, nil
+	} else if op == NOP {
+		return JMP, nil
+	} else {
+		return "", fmt.Errorf("operation %s has no replacement operation", op)
+	}
+}
+
+func FindFinalAccumulatorValueWithCycle(input string) int {
+	bc := NewBootCode()
+	bc.LoadProgram(input)
+
+	for _, instruction := range bc.instructions {
+		if operationCanCauseCycle(instruction.operation) {
+			replacementOperation, err := getReplacementOperation(instruction.operation)
+			if err != nil {
+				log.Fatal(err)
+			}
+			originalOperation := instruction.operation
+			instruction.operation = replacementOperation
+			acc, err := bc.Execute()
+			if err == nil {
+				return acc
+			}
+			instruction.operation = originalOperation
+		}
+	}
+	return -1
 }
 
 func main() {
@@ -75,6 +128,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("the accumulator's value right at the start of the cycle is ", FindAccumulatorValueAtCycleStart(string(data)))
+	fmt.Println("the accumulator's value right at the start of the cycle is ", FindFinalAccumulatorValue(string(data)))
+	fmt.Println("the accumulator's value after fixing the cycle is ", FindFinalAccumulatorValueWithCycle(string(data)))
 
 }
