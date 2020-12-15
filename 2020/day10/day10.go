@@ -62,10 +62,50 @@ func ComputeJoltProduct(input string) int {
 	return oneJoltDifferences * (threeJoltDifferences + 1)
 }
 
+func CountValidArrangementsUtil(ratings map[int]bool, memo map[int]int, currentRating int, maxRating int) int {
+	if currentRating == maxRating {
+		return 1
+	}
+	if _, seen := memo[currentRating]; seen {
+		return memo[currentRating]
+	}
+	
+	ways := 0
+
+	for _, delta := range []int{1, 2, 3} {
+		potentialOutletRating := currentRating + delta
+		if _, ok := ratings[potentialOutletRating]; ok {
+			ways += CountValidArrangementsUtil(ratings, memo, potentialOutletRating, maxRating)
+		}
+	}
+	memo[currentRating] = ways
+	return ways
+}
+
+func CountValidArrangements(input string) int {
+	lines := strings.Split(input, "\n")
+	ratings := make(map[int]bool)
+
+	for _, line := range lines {
+		if len(line) > 0 {
+			n, err := strconv.Atoi(line)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ratings[n] = true
+		}
+	}
+	maxAdapterRating := maxKey(ratings)
+	memo := make(map[int]int)
+	return CountValidArrangementsUtil(ratings, memo, 0, maxAdapterRating)
+}
+
 func main() {
 	data, err := ioutil.ReadFile("input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("the number of 1-jolt differences multiplied by 3-jolt differences is", ComputeJoltProduct(string(data)))
+	fmt.Println("the number ways to arrange these adapters is", CountValidArrangements(string(data)))
+
 }
