@@ -27,22 +27,12 @@ func maxKey(nums map[int]bool) int {
 }
 
 func ComputeJoltProduct(input string) int {
-	lines := strings.Split(input, "\n")
-	ratings := make(map[int]bool)
-
-	for _, line := range lines {
-		if len(line) > 0 {
-			n, err := strconv.Atoi(line)
-			if err != nil {
-				log.Fatal(err)
-			}
-			ratings[n] = true
-		}
-	}
+	ratings := parseInput(input)
 
 	currentTerminatingOutletRating := 0
 	oneJoltDifferences := 0
 	threeJoltDifferences := 0
+	
 	maxAdapterRating := maxKey(ratings)
 
 	for currentTerminatingOutletRating < maxAdapterRating {
@@ -65,13 +55,11 @@ func ComputeJoltProduct(input string) int {
 func CountValidArrangementsUtil(ratings map[int]bool, memo map[int]int, currentRating int, maxRating int) int {
 	if currentRating == maxRating {
 		return 1
-	}
-	if _, seen := memo[currentRating]; seen {
+	} else if _, seen := memo[currentRating]; seen {
 		return memo[currentRating]
 	}
-	
-	ways := 0
 
+	ways := 0
 	for _, delta := range []int{1, 2, 3} {
 		potentialOutletRating := currentRating + delta
 		if _, ok := ratings[potentialOutletRating]; ok {
@@ -82,11 +70,9 @@ func CountValidArrangementsUtil(ratings map[int]bool, memo map[int]int, currentR
 	return ways
 }
 
-func CountValidArrangements(input string) int {
-	lines := strings.Split(input, "\n")
+func parseInput(input string) map[int]bool {
 	ratings := make(map[int]bool)
-
-	for _, line := range lines {
+	for _, line := range strings.Split(input, "\n") {
 		if len(line) > 0 {
 			n, err := strconv.Atoi(line)
 			if err != nil {
@@ -95,9 +81,13 @@ func CountValidArrangements(input string) int {
 			ratings[n] = true
 		}
 	}
+	return ratings
+}
+
+func CountValidArrangements(input string) int {
+	ratings := parseInput(input)
 	maxAdapterRating := maxKey(ratings)
-	memo := make(map[int]int)
-	return CountValidArrangementsUtil(ratings, memo, 0, maxAdapterRating)
+	return CountValidArrangementsUtil(ratings, make(map[int]int), 0, maxAdapterRating)
 }
 
 func main() {
