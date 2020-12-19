@@ -14,6 +14,8 @@ var (
 	floor    = "."
 )
 
+type boardUpdateFunc func(originalBoard [][]string, updatedBoard [][]string)
+
 func hashBoard(o interface{}) string {
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%v", o)))
@@ -58,27 +60,37 @@ func countOccupiedSeatsAdjacentToCell(board [][]string, row int, col int) int {
 	return result
 }
 
-func countOccupiedSeatsOnEquiliburumUtil(board [][]string) int {
-	nextBoard := constructNewBoardFromExisting(board)
-
-	for i := range board {
-		for j := range board[i] {
-			occupiedSeats := countOccupiedSeatsAdjacentToCell(board, i, j)
-			if board[i][j] == occupied && occupiedSeats >= 4 {
-				nextBoard[i][j] = empty
-			} else if board[i][j] == empty && occupiedSeats == 0 {
-				nextBoard[i][j] = occupied
-			}
+func countVisibleOccupiedSeats(board [][]string, row int, col int) int {
+	result := 0
+	adjacentCellDeltas := [][2]int{{0, -1}, {0, 1}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}, {1, 0}, {-1, 0}}
+	for i := range adjacentCellDeltas {
+		deltaX := adjacentCellDeltas[i][0]
+		deltaY := adjacentCellDeltas[i][1]
+		targetRow := row + deltaX
+		targetCol := col + deltaY
+		for inBounds(board, targetRow, targetCol) && board[targetRow][targetCol] == floor {
+			targetRow += deltaX
+			targetCol += deltaY
+		}
+		if inBounds(board, targetRow, targetCol) && board[targetRow][targetCol] == occupied {
+			result++
 		}
 	}
+	return result
+}
+
+func countOccupiedSeatsAtEquiliburumUtil(board [][]string, updateFunc boardUpdateFunc) int {
+	nextBoard := constructNewBoardFromExisting(board)
+
+	updateFunc(board, nextBoard)
+
 	if hashBoard(nextBoard) == hashBoard(board) {
 		return countOccupiedSeats(board)
 	}
-	return countOccupiedSeatsOnEquiliburumUtil(nextBoard)
-
+	return countOccupiedSeatsAtEquiliburumUtil(nextBoard, updateFunc)
 }
 
-func CountOccupiedSeatsOnEquiliburum(input string) int {
+func parseInput(input string) [][]string {
 	inputLines := strings.Split(input, "\n")
 	board := make([][]string, len(inputLines))
 
@@ -91,12 +103,46 @@ func CountOccupiedSeatsOnEquiliburum(input string) int {
 			}
 		}
 	}
-	return countOccupiedSeatsOnEquiliburumUtil(board)
+	return board
 }
+func CountOccupiedSeatsAtEquiliburum(input string, updateFunc boardUpdateFunc) int {
+	board := parseInput(input)
+	return countOccupiedSeatsAtEquiliburumUtil(board, updateFunc)
+}
+
 func main() {
 	data, err := ioutil.ReadFile("input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(CountOccupiedSeatsOnEquiliburum(string(data)))
+
+	updateFunc1 := func(originalBoard [][]string, updatedBoard [][]string) {
+		for i := range originalBoard {
+			for j := range updatedBoard[i] {
+				occupiedSeats := countOccupiedSeatsAdjacentToCell(originalBoard, i, j)
+				if originalBoard[i][j] == occupied && occupiedSeats >= 4 {
+					updatedBoard[i][j] = empty
+				} else if originalBoard[i][j] == empty && occupiedSeats == 0 {
+					updatedBoard[i][j] = occupied
+				}
+			}
+		}
+	}
+
+	updateFunc2 := func(originalBoard [][]string, updatedBoard [][]string) {
+		for i := range originalBoard {
+			for j := range updatedBoard[i] {
+				occupiedSeats := countVisibleOccupiedSeats(originalBoard, i, j)
+				if originalBoard[i][j] == occupied && occupiedSeats >= 5 {
+					updatedBoard[i][j] = empty
+				} else if originalBoard[i][j] == empty && occupiedSeats == 0 {
+					updatedBoard[i][j] = occupied
+				}
+			}
+		}
+	}
+
+	fmt.Println(CountOccupiedSeatsAtEquiliburum(string(data), updateFunc1))
+	fmt.Println(CountOccupiedSeatsAtEquiliburum(string(data), updateFunc2))
+
 }
