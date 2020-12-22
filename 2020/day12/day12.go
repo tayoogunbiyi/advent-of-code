@@ -25,6 +25,11 @@ type Instruction struct {
 	value  int
 }
 
+type Coordinates struct {
+	north int
+	east  int
+}
+
 func (instruction *Instruction) CanChangeDirection() bool {
 	return instruction.action == "R" || instruction.action == "L"
 }
@@ -76,6 +81,20 @@ func ParseInput(input string) []*Instruction {
 	return instructions
 }
 
+func rotateToNewDirectionIndex(instruction *Instruction, currentDirectionIndex int) int {
+	if instruction.action == "R" {
+		currentDirectionIndex += instruction.value / 90
+		currentDirectionIndex %= len(directions)
+	} else {
+		currentDirectionIndex -= instruction.value / 90
+		if currentDirectionIndex < 0 {
+			currentDirectionIndex += len(directions)
+		}
+		currentDirectionIndex %= len(directions)
+	}
+	return currentDirectionIndex
+}
+
 func FindDistanceMoved(input string) int {
 	instructions := ParseInput(input)
 
@@ -84,43 +103,81 @@ func FindDistanceMoved(input string) int {
 	eastCoordinate := 0
 	northCoordinate := 0
 
-	for i, instruction := range instructions {
+	for _, instruction := range instructions {
 		if instruction.CanChangeDirection() {
-			if instruction.action == "R" {
-				currentDirectionIndex += instruction.value / 90
-				currentDirectionIndex %= len(directions)
-			} else {
-				currentDirectionIndex -= instruction.value / 90
-				if currentDirectionIndex < 0 {
-					currentDirectionIndex += len(directions)
-				}
-				currentDirectionIndex %= len(directions)
-			}
+			currentDirectionIndex = rotateToNewDirectionIndex(instruction, currentDirectionIndex)
 		} else {
 			eastCoordinate, northCoordinate = instruction.ApplyOnCoordinates(directions[currentDirectionIndex], eastCoordinate, northCoordinate)
 		}
-		fmt.Println(i, *instruction)
-		fmt.Println(eastCoordinate, northCoordinate, currentDirectionIndex, directions[currentDirectionIndex])
-		// reader := bufio.NewReader(os.Stdin)
-		// fmt.Print("Continue: ")
-		// reader.ReadString('\n')
 	}
-
-	if eastCoordinate < 0 {
-		eastCoordinate = -eastCoordinate
-	}
-	if northCoordinate < 0 {
-		northCoordinate = -northCoordinate
-	}
-
-	fmt.Println(eastCoordinate, northCoordinate)
-	return eastCoordinate + northCoordinate
+	return abs(eastCoordinate) + abs(northCoordinate)
 }
 
+func turnWayPoint(instruction *Instruction, waypointCoordinates *Coordinates) *Coordinates {
+	newWaypointCoordinates := &Coordinates{north: waypointCoordinates.north, east: waypointCoordinates.east}
+
+	if instruction.action == "R" {
+		if instruction.value == 90 {
+			newWaypointCoordinates.north = -waypointCoordinates.east
+			newWaypointCoordinates.east = waypointCoordinates.north
+		} else if instruction.value == 180 {
+			newWaypointCoordinates.north = -waypointCoordinates.north
+			newWaypointCoordinates.east = -waypointCoordinates.east
+		} else if instruction.value == 270 {
+			newWaypointCoordinates.north = waypointCoordinates.east
+			newWaypointCoordinates.east = -waypointCoordinates.north
+		}
+	} else if instruction.action == "L" {
+		return turnWayPoint(&Instruction{action: "R", value: 360 - instruction.value}, waypointCoordinates)
+	} else {
+		log.Fatalf("unexpected instruction %v", instruction)
+	}
+	return newWaypointCoordinates
+}
+
+func FindDistanceMovedWithWaypoint(input string) int {
+	instructions := ParseInput(input)
+
+	waypointCoordinates := &Coordinates{north: 1, east: 10}
+	shipCoordinates := &Coordinates{north: 0, east: 0}
+
+	for _, instruction := range instructions {
+		if instruction.action == "F" {
+			shipCoordinates.east += waypointCoordinates.east * instruction.value
+			shipCoordinates.north += waypointCoordinates.north * instruction.value
+		} else if instruction.action == "N" || instruction.action == "S" {
+			multiplier := 1
+			if instruction.action == "S" {
+				multiplier *= -1
+			}
+			waypointCoordinates.north += multiplier * instruction.value
+		} else if instruction.action == "W" || instruction.action == "E" {
+			multiplier := 1
+			if instruction.action == "W" {
+				multiplier *= -1
+			}
+			waypointCoordinates.east += multiplier * instruction.value
+		} else if instruction.CanChangeDirection() {
+			waypointCoordinates = turnWayPoint(instruction, waypointCoordinates)
+
+		} else {
+			log.Fatalf("unexpected instruction %v", instruction)
+		}
+	}
+	return abs(shipCoordinates.north) + abs(shipCoordinates.east)
+}
+
+func abs(v int) int {
+	if v < 0 {
+		v *= -1
+	}
+	return v
+}
 func main() {
 	data, err := ioutil.ReadFile("input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("distance moved - ", FindDistanceMoved(string(data)))
+	fmt.Println("distance moved with waypoint - ", FindDistanceMovedWithWaypoint(string(data)))
 }
