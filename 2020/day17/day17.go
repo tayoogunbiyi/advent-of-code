@@ -14,6 +14,14 @@ var (
 	OCCUPIED uint8 = '#'
 )
 
+type HyperCube struct {
+	X, Y, Z, W int
+}
+
+type HyperGrid struct {
+	Cubes map[HyperCube]bool
+}
+
 type Cube struct {
 	X, Y, Z int
 }
@@ -116,7 +124,124 @@ func (g *Grid) countActiveCubes() int {
 			count++
 		}
 	}
+	return count
+}
 
+func (hc *HyperCube) getNeighbours() []HyperCube {
+	var res []HyperCube
+
+	for _, v := range hc.getNeighbourVectors() {
+		res = append(res, HyperCube{X: hc.X + v.X, Y: hc.Y + v.Y, Z: hc.Z + v.Z, W: hc.W + v.W})
+	}
+	return res
+}
+
+func (hc *HyperCube) getNeighbourVectors() []HyperCube {
+	return []HyperCube{
+		{X: -1, Y: -1, Z: -1, W: -1}, {X: 0, Y: -1, Z: -1, W: -1}, {X: 1, Y: -1, Z: -1, W: -1},
+		{X: -1, Y: 0, Z: -1, W: -1}, {X: 0, Y: 0, Z: -1, W: -1}, {X: 1, Y: 0, Z: -1, W: -1},
+		{X: -1, Y: 1, Z: -1, W: -1}, {X: 0, Y: 1, Z: -1, W: -1}, {X: 1, Y: 1, Z: -1, W: -1},
+		{X: -1, Y: -1, Z: 0, W: -1}, {X: 0, Y: -1, Z: 0, W: -1}, {X: 1, Y: -1, Z: 0, W: -1},
+		{X: -1, Y: 0, Z: 0, W: -1}, {X: 0, Y: 0, Z: 0, W: -1}, {X: 1, Y: 0, Z: 0, W: -1},
+		{X: -1, Y: 1, Z: 0, W: -1}, {X: 0, Y: 1, Z: 0, W: -1}, {X: 1, Y: 1, Z: 0, W: -1},
+		{X: -1, Y: -1, Z: 1, W: -1}, {X: 0, Y: -1, Z: 1, W: -1}, {X: 1, Y: -1, Z: 1, W: -1},
+		{X: -1, Y: 0, Z: 1, W: -1}, {X: 0, Y: 0, Z: 1, W: -1}, {X: 1, Y: 0, Z: 1, W: -1},
+		{X: -1, Y: 1, Z: 1, W: -1}, {X: 0, Y: 1, Z: 1, W: -1}, {X: 1, Y: 1, Z: 1, W: -1},
+
+		{X: -1, Y: -1, Z: -1, W: 0}, {X: 0, Y: -1, Z: -1, W: 0}, {X: 1, Y: -1, Z: -1, W: 0},
+		{X: -1, Y: 0, Z: -1, W: 0}, {X: 0, Y: 0, Z: -1, W: 0}, {X: 1, Y: 0, Z: -1, W: 0},
+		{X: -1, Y: 1, Z: -1, W: 0}, {X: 0, Y: 1, Z: -1, W: 0}, {X: 1, Y: 1, Z: -1, W: 0},
+		{X: -1, Y: -1, Z: 0, W: 0}, {X: 0, Y: -1, Z: 0, W: 0}, {X: 1, Y: -1, Z: 0, W: 0},
+		{X: -1, Y: 0, Z: 0, W: 0} /*, {X: 0, Y: 0, Z: 0, W: 0} */, {X: 1, Y: 0, Z: 0, W: 0},
+		{X: -1, Y: 1, Z: 0, W: 0}, {X: 0, Y: 1, Z: 0, W: 0}, {X: 1, Y: 1, Z: 0, W: 0},
+		{X: -1, Y: -1, Z: 1, W: 0}, {X: 0, Y: -1, Z: 1, W: 0}, {X: 1, Y: -1, Z: 1, W: 0},
+		{X: -1, Y: 0, Z: 1, W: 0}, {X: 0, Y: 0, Z: 1, W: 0}, {X: 1, Y: 0, Z: 1, W: 0},
+		{X: -1, Y: 1, Z: 1, W: 0}, {X: 0, Y: 1, Z: 1, W: 0}, {X: 1, Y: 1, Z: 1, W: 0},
+
+		{X: -1, Y: -1, Z: -1, W: 1}, {X: 0, Y: -1, Z: -1, W: 1}, {X: 1, Y: -1, Z: -1, W: 1},
+		{X: -1, Y: 0, Z: -1, W: 1}, {X: 0, Y: 0, Z: -1, W: 1}, {X: 1, Y: 0, Z: -1, W: 1},
+		{X: -1, Y: 1, Z: -1, W: 1}, {X: 0, Y: 1, Z: -1, W: 1}, {X: 1, Y: 1, Z: -1, W: 1},
+		{X: -1, Y: -1, Z: 0, W: 1}, {X: 0, Y: -1, Z: 0, W: 1}, {X: 1, Y: -1, Z: 0, W: 1},
+		{X: -1, Y: 0, Z: 0, W: 1}, {X: 0, Y: 0, Z: 0, W: 1}, {X: 1, Y: 0, Z: 0, W: 1},
+		{X: -1, Y: 1, Z: 0, W: 1}, {X: 0, Y: 1, Z: 0, W: 1}, {X: 1, Y: 1, Z: 0, W: 1},
+		{X: -1, Y: -1, Z: 1, W: 1}, {X: 0, Y: -1, Z: 1, W: 1}, {X: 1, Y: -1, Z: 1, W: 1},
+		{X: -1, Y: 0, Z: 1, W: 1}, {X: 0, Y: 0, Z: 1, W: 1}, {X: 1, Y: 0, Z: 1, W: 1},
+		{X: -1, Y: 1, Z: 1, W: 1}, {X: 0, Y: 1, Z: 1, W: 1}, {X: 1, Y: 1, Z: 1, W: 1},
+	}
+
+}
+
+func (hg *HyperGrid) countActiveNeighbours(hc HyperCube) int {
+	count := 0
+	for _, neighbourCubes := range hc.getNeighbours() {
+		if hg.Cubes[neighbourCubes] {
+			count++
+		}
+	}
+	return count
+}
+
+func (hg *HyperGrid) Cycle() {
+	nextState := map[HyperCube]bool{}
+	hg.markInvisibleNeighboursAsUnoccupied()
+	for c, isActive := range hg.Cubes {
+		activeNeighbourCount := hg.countActiveNeighbours(c)
+		nextStateIsActive := false
+
+		if isActive {
+			nextStateIsActive = activeNeighbourCount == 2 || activeNeighbourCount == 3
+		} else {
+			nextStateIsActive = activeNeighbourCount == 3
+		}
+		nextState[c] = nextStateIsActive
+	}
+
+	hg.Cubes = nextState
+
+}
+func (hg *HyperGrid) markInvisibleNeighboursAsUnoccupied() {
+	var invisibleNeighbours []HyperCube
+
+	for cube := range hg.Cubes {
+		for _, neighbourCube := range cube.getNeighbours() {
+			if !hg.Cubes[neighbourCube] {
+				invisibleNeighbours = append(invisibleNeighbours, neighbourCube)
+			}
+		}
+	}
+
+	for _, c := range invisibleNeighbours {
+		hg.Cubes[c] = false
+	}
+}
+
+func parseInputFor2(input string) *HyperGrid {
+	hg := HyperGrid{}
+	hg.Cubes = map[HyperCube]bool{}
+
+	for row, line := range strings.Split(input, "\n") {
+		if len(line) > 0 {
+			for col := range line {
+				hc := HyperCube{
+					X: col,
+					Y: row,
+					Z: 0,
+					W: 0,
+				}
+				hg.Cubes[hc] = line[col] == OCCUPIED
+			}
+		}
+	}
+	return &hg
+}
+
+func (hg *HyperGrid) countActiveHyperCubes() int {
+	count := 0
+	for _, isActive := range hg.Cubes {
+		if isActive {
+			count++
+		}
+	}
 	return count
 }
 
@@ -130,4 +255,12 @@ func main() {
 		grid.Cycle()
 	}
 	fmt.Println(grid.countActiveCubes())
+
+	grid2 := parseInputFor2(string(data))
+
+	for i := 0; i < 6; i++ {
+		grid2.Cycle()
+	}
+	fmt.Println(grid2.countActiveHyperCubes())
+
 }
